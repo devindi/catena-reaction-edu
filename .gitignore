@@ -8,6 +8,9 @@ gen/
 *.log
 out/
 *.apk
+*.txt
+*.properties
+build.xml
 
 #################
 ## Eclipse
