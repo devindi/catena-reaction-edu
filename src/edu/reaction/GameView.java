@@ -2,9 +2,7 @@ package edu.reaction;
 
 import android.content.Context;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.*;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
 import android.view.GestureDetector;
@@ -25,6 +23,8 @@ public class GameView extends View {
     private float mScaleFactor;
 
     private final GestureDetector detector;
+
+    private GameLogic logic;
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -59,6 +59,10 @@ public class GameView extends View {
         scaleGestureDetector=new ScaleGestureDetector(context, new MyScaleGestureListener());
 
         detector=new GestureDetector(context, new MyGestureListener());
+
+
+
+
     }
 
 
@@ -77,6 +81,55 @@ public class GameView extends View {
         scaleGestureDetector.onTouchEvent(event);
         return true;
     }
+
+    void drawAtoms(int cellX, int cellY, int color, int count){
+        //считаем координаты центра ячейки
+        float x0=((1f/(2* horizontalCountOfCells))*viewSize+(1f/ horizontalCountOfCells)*cellX*viewSize);
+        float y0=((1f/(2* verticalCountOfCells))*viewSize+(1f/ verticalCountOfCells)*cellY*viewSize);
+        paint.setColor(color);
+        switch (count){
+            //todo non-absolute values
+            case 1:
+                drawAtoms(cellX, cellY, color, 0);//стираем существующие атомы
+                mCanvas.drawCircle(x0, y0, 3, paint);//рисуем один атом в центре ячейки
+                break;
+            case 2:
+                drawAtoms(cellX, cellY, color, 0);
+                //рисуем пару атомов на удалении от центра ячейки
+                mCanvas.drawCircle(x0-7, y0, 3, paint);
+                mCanvas.drawCircle(x0+7, y0, 3, paint);
+                break;
+            case 3:
+                drawAtoms(cellX, cellY, color, 0);
+                //рисуем три атома в вершинах правильного треугольника с центром в центре ячейки
+                mCanvas.drawCircle(x0 - 7, y0 + 4, 3, paint);
+                mCanvas.drawCircle(x0 + 7, y0 + 4, 3, paint);
+                mCanvas.drawCircle(x0, y0-8, 3, paint);
+                break;
+            case 4:
+                drawAtoms(cellX, cellY, color, 0);
+                //рисуем 4 атом в вершинах квадрата с центром в центре ячейки
+                mCanvas.drawCircle(x0-7, y0-7, 3, paint);
+                mCanvas.drawCircle(x0-7, y0+7, 3, paint);
+                mCanvas.drawCircle(x0+7, y0+7, 3, paint);
+                mCanvas.drawCircle(x0+7, y0-7, 3, paint);
+                break;
+            case 0:
+                //устанавливаем кисти режим стирания
+                paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+                //заполнение обойденного участка
+                paint.setStyle(Paint.Style.FILL);
+                //рисуем большой круг, на месте которого ничего не останется
+                mCanvas.drawCircle(x0, y0, 17, paint);
+                //возвращаем исходные параметры
+                paint.setStyle(Paint.Style.STROKE);
+                paint.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.SRC));
+                break;
+        }
+        invalidate();//перерисовываем канвас
+    }
+
+
 
     //переводим dp в пиксели
     public float convertDpToPixel(float dp,Context context){
@@ -139,6 +192,7 @@ public class GameView extends View {
             //получаем координаты ячейки, по которой тапнули
             int cellX=(int)((event.getX()+getScrollX())/mScaleFactor);
             int cellY=(int)((event.getY()+getScrollY())/mScaleFactor);
+            logic.addAtom(cellX, cellY);
             return true;
         }
 
@@ -148,9 +202,13 @@ public class GameView extends View {
             //зумируем канвас к первоначальному виду
             mScaleFactor=1f;
             canvasSize =viewSize;
-            scrollTo(0, 0);
-            invalidate();
+            scrollTo(0, 0);//скролим, чтобы не было видно краев канваса.
+            invalidate();//перерисовываем канвас
             return true;
         }
+    }
+
+    public void setLogic(GameLogic logic) {
+        this.logic = logic;
     }
 }
