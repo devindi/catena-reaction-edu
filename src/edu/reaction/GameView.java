@@ -7,6 +7,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.View;
@@ -22,6 +23,8 @@ public class GameView extends View {
     private final ScaleGestureDetector scaleGestureDetector;
     private final int viewSize;
     private float mScaleFactor;
+
+    private final GestureDetector detector;
 
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -54,6 +57,8 @@ public class GameView extends View {
             mCanvas.drawLine(0, (float)y* canvasSize / verticalCountOfCells, canvasSize, (float)y* canvasSize / verticalCountOfCells, paint);
 
         scaleGestureDetector=new ScaleGestureDetector(context, new MyScaleGestureListener());
+
+        detector=new GestureDetector(context, new MyGestureListener());
     }
 
 
@@ -65,9 +70,10 @@ public class GameView extends View {
         canvas.restore();
     }
 
-    //в случае касания пальем передаем управление MyScaleGestureListener
+    //в случае касания пальем передаем обработку Motion Event'а MyGestureListener'у и MyScaleGestureListener'у
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        detector.onTouchEvent(event);
         scaleGestureDetector.onTouchEvent(event);
         return true;
     }
@@ -103,6 +109,46 @@ public class GameView extends View {
                 scrollTo(scrollX, scrollY);
             }
             //вызываем перерисовку принудительно
+            invalidate();
+            return true;
+        }
+    }
+
+    //унаследовались от GestureDetector.SimpleOnGestureListener, чтобы не писать пустую
+    //реализацию ненужных методов интерфейса OnGestureListener
+    private class MyGestureListener extends GestureDetector.SimpleOnGestureListener
+    {
+        //обрабатываем скролл (перемещение пальца по экрану)
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY)
+        {
+            //не даем канвасу показать края по горизонтали
+            if(getScrollX()+distanceX< canvasSize -viewSize && getScrollX()+distanceX>0){
+                scrollBy((int)distanceX, 0);
+            }
+            //не даем канвасу показать края по вертикали
+            if(getScrollY()+distanceY< canvasSize -viewSize && getScrollY()+distanceY>0){
+                scrollBy(0, (int)distanceY);
+            }
+            return true;
+        }
+
+        //обрабатываем одиночный тап
+        @Override
+        public boolean onSingleTapConfirmed(MotionEvent event){
+            //получаем координаты ячейки, по которой тапнули
+            int cellX=(int)((event.getX()+getScrollX())/mScaleFactor);
+            int cellY=(int)((event.getY()+getScrollY())/mScaleFactor);
+            return true;
+        }
+
+        //обрабатываем двойной тап
+        @Override
+        public boolean onDoubleTapEvent(MotionEvent event){
+            //зумируем канвас к первоначальному виду
+            mScaleFactor=1f;
+            canvasSize =viewSize;
+            scrollTo(0, 0);
             invalidate();
             return true;
         }
