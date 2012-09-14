@@ -1,7 +1,6 @@
 package edu.reaction;
 
 import android.os.Handler;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +39,8 @@ public class GameLogic {
     }
 
 
-
+    //вызывается из вьюхи по одиночному тапу
     public void addAtom(final int cellX, final int cellY) {
-        Log.e("add", " "+cellX+" "+cellY);
         //получаем ячейку, в которую добавляем атом, если ее нет в массиве - выходим из функции.
         final Cell currentCell;
         try{
@@ -50,11 +48,10 @@ public class GameLogic {
         }catch (IndexOutOfBoundsException ex){
             return;
         }
-
         //если в ячейке уже есть атомы этого игрока
         if(currentCell.getPlayer()==currentPlayer){
             currentCell.addAtom();
-            view.drawAtoms(cellX, cellY, colors[currentPlayer - 1], currentCell.getCountOfAtoms());
+            view.drawAtoms(cellX, cellY, colors[currentPlayer], currentCell.getCountOfAtoms());
             //если ячейка заполнена
             if(currentCell.isFilled()){
                 final List<Cell> nearby=new ArrayList<Cell>(4);//лист соседних ячеек
@@ -65,6 +62,10 @@ public class GameLogic {
                 for(Cell nearbyCell:nearby){
                     nearbyCell.setPlayer(currentPlayer);//соседним ячейкам устанавливаем нового владельца
                 }
+                delayedAddAtom(cellX, cellY-1);
+                delayedAddAtom(cellX, cellY+1);
+                delayedAddAtom(cellX-1, cellY);
+                delayedAddAtom(cellX+1, cellY);
                 //через секунду произойдет вызов метода run()
                 mHandler.postDelayed(new Runnable() {
                     @Override
@@ -74,10 +75,6 @@ public class GameLogic {
                         //и пустой
                         currentCell.resetCount();
                         view.drawAtoms(cellX, cellY, 0x000000, 0);
-                        addAtom(cellX, cellY-1);
-                        addAtom(cellX, cellY+1);
-                        addAtom(cellX-1, cellY);
-                        addAtom(cellX+1, cellY);
                     }
                 }, 1000);
                 return;
@@ -89,6 +86,16 @@ public class GameLogic {
         }else{
             return;
         }
+    }
+
+    //через секунду соседние ячйки получат по атому
+    private void delayedAddAtom(final int cellX, final int cellY){
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                addAtom(cellX, cellY);
+            }
+        }, 1000);
     }
 
 
