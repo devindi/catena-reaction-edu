@@ -15,4 +15,20 @@ public class GameActivity extends Activity {
         GameLogic logic=new GameLogic(view, this);
         view.setLogic(logic);
     }
+
+    void setPlayerName(int playerID){
+
+    }
+
+    void setScore(int[] score){
+
+    }
+
+    void setMoveNumber(int moveNumber){
+
+    }
+
+    void endGame(int winnerID, int score){
+
+    }
 }

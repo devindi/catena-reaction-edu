@@ -27,6 +27,8 @@ public class GameView extends View {
 
     private GameLogic logic;
 
+    private boolean isLock=false;
+
     public GameView(Context context, AttributeSet attrs) {
         super(context, attrs);
         //размер игрового поля
@@ -139,6 +141,18 @@ public class GameView extends View {
         return dp * (metrics.densityDpi/160f);
     }
 
+    public boolean isLock() {
+        return isLock;
+    }
+
+    public void lock(){
+        isLock=true;
+    }
+
+    public void unlock(){
+        isLock=false;
+    }
+
     //унаследовались от ScaleGestureDetector.SimpleOnScaleGestureListener, чтобы не писать пустую реализацию ненужных методов интерфейса OnScaleGestureListener
     private class MyScaleGestureListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
         //обрабатываем "щипок" пальцами
@@ -190,6 +204,7 @@ public class GameView extends View {
         //обрабатываем одиночный тап
         @Override
         public boolean onSingleTapConfirmed(MotionEvent event){
+            if(isLock)return true;
             //получаем координаты ячейки, по которой тапнули
             float eventX=(event.getX()+getScrollX())/mScaleFactor;
             float eventY=(event.getY()+getScrollY())/mScaleFactor;

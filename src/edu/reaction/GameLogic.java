@@ -15,6 +15,8 @@ public class GameLogic {
     private final int[] colors={0xff1d76fc, 0xfffb1d76, 0xff76fb1d, 0xffa21cfb};//цвета атомов
     private final Handler mHandler;
 
+    private boolean isLock=false, isEndGame=false;
+
     public GameLogic(GameView view, GameActivity activity) {
         this.view = view;
         this.activity=activity;
@@ -54,6 +56,7 @@ public class GameLogic {
             view.drawAtoms(cellX, cellY, colors[currentPlayer], currentCell.getCountOfAtoms());
             //если ячейка заполнена
             if(currentCell.isFilled()){
+                view.lock();
                 final List<Cell> nearby=new ArrayList<Cell>(4);//лист соседних ячеек
                 selfAddCell(cellX, cellY-1, nearby);
                 selfAddCell(cellX, cellY+1, nearby);
@@ -76,7 +79,7 @@ public class GameLogic {
                         currentCell.resetCount();
                         view.drawAtoms(cellX, cellY, 0x000000, 0);
                     }
-                }, 1000);
+                }, 900);
                 return;
             }
         }else if(currentCell.getPlayer()==-1){
@@ -86,7 +89,47 @@ public class GameLogic {
         }else{
             return;
         }
+        int[] score=scoring();
+        if(moveNumber==0){
+            endTurn(score);
+        }else {
+            //проверка на конец игры. Нельзя делать в теле метода endTurn() потому что
+            //не определим конец игры при бесконечной реакции
+            int losersCount=0;
+            for(int i=0; i<COUNT_OF_PLAYERS; i++){
+                if(score[i]==0)
+                    losersCount++;
+            }
+            if(losersCount+1==COUNT_OF_PLAYERS){
+                isEndGame=true;
+            }
+            if(!mHandler.hasMessages(0)){
+                view.unlock();
+                endTurn(score);
+            }
+        }
     }
+
+    //обработка конца хода
+    private void endTurn(int[] score){
+        if(!isEndGame){
+            if(currentPlayer == COUNT_OF_PLAYERS-1){
+                moveNumber++;
+                currentPlayer=0;
+            }else {
+                currentPlayer++;
+            }
+        }else{
+            activity.endGame(currentPlayer, score[currentPlayer]);
+        }
+        //извещаем активити, о том, что поменялся счет, текущий игрок и номер хода
+        activity.setMoveNumber(moveNumber);
+        activity.setPlayerName(currentPlayer);
+        activity.setScore(score);
+
+    }
+
+
 
     //через секунду соседние ячйки получат по атому
     private void delayedAddAtom(final int cellX, final int cellY){
@@ -98,6 +141,18 @@ public class GameLogic {
         }, 1000);
     }
 
+    //подсчет очков
+    int[] scoring(){
+        int[] score=new int[COUNT_OF_PLAYERS];
+        for(int x=0; x<BOARD_WIDTH; x++){
+            for(int y=0; y<BOARD_HEIGHT; y++){
+                if(cells[x][y].getPlayer()!=-1){
+                    score[cells[x][y].getPlayer()]+=cells[x][y].getCountOfAtoms();
+                }
+            }
+        }
+        return score;
+    }
 
     //добавляем в лист target существующие ячейки
     private void selfAddCell(int cellX, int cellY, List<Cell> target){
