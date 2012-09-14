@@ -5,6 +5,7 @@ import android.content.res.Resources;
 import android.graphics.*;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
@@ -190,9 +191,9 @@ public class GameView extends View {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent event){
             //получаем координаты ячейки, по которой тапнули
-            int cellX=(int)((event.getX()+getScrollX())/mScaleFactor);
-            int cellY=(int)((event.getY()+getScrollY())/mScaleFactor);
-            logic.addAtom(cellX, cellY);
+            float eventX=(event.getX()+getScrollX())/mScaleFactor;
+            float eventY=(event.getY()+getScrollY())/mScaleFactor;
+            logic.addAtom((int)(horizontalCountOfCells *eventX/viewSize), (int)(verticalCountOfCells *eventY/viewSize));
             return true;
         }
 
