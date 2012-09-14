@@ -11,5 +11,8 @@ public class GameActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+        GameView view=(GameView)findViewById(R.id.game_view);
+        GameLogic logic=new GameLogic(view, this);
+        view.setLogic(logic);
     }
 }
